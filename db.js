@@ -1,18 +1,25 @@
-const mysql = require("mysql2");
+const mysql = require("mysql2/promise");
 
-const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "admin",
-  database: "iot",
-});
+let connection;
 
-connection.connect((err) => {
-  if (err) {
-    console.error("Error connecting to the database:", err.stack);
-    return;
+async function init() {
+  try {
+    connection = await mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: "admin",
+      database: "iot",
+    });
+
+    const response = await connection.connect();
+    console.log("Connected to the database as ID: ", response.threadId);
+  } catch (err) {
+    console.log("Error on db connection: ", err);
   }
-  console.log("Connected to the database as ID", connection.threadId);
-});
+}
 
-module.exports = connection;
+const query = async (query, data) => {
+  return await connection.execute(query, data);
+};
+
+module.exports = { init, query };
