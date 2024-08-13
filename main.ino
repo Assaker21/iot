@@ -1,13 +1,16 @@
 #define TEMP_PIN 19
 #define CURR_PIN 34
-#define VOLT_PIN 3
+#define VOLT_PIN 35
 #define RED_PIN 4
 #define GREEN_PIN 2
 #define BLUE_PIN 5
 #define BTN_PIN 18
+#define RLY_PIN 23
 
 const char *apSSID = "IOT Device";
 const char *apPassword = "password";
+
+const float voltmeter_sensitivity = 646.0f;
 
 #include <jsonlib.h>
 #include <WiFi.h>
@@ -18,6 +21,7 @@ const char *apPassword = "password";
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <ACS712.h>
+#include <ZMPT101B.h>
 
 struct SensorData {
   float temperature;
@@ -40,6 +44,7 @@ enum LedColors {
 OneWire oneWire(TEMP_PIN);
 DallasTemperature sensors(&oneWire);
 ACS712 ACS(CURR_PIN, 3.3, 4095, 100);
+ZMPT101B voltageSensor(VOLT_PIN, 50.0);
 
 State state = CONNECTING;
 WiFiServer server(80);
@@ -48,11 +53,13 @@ MqttClient mqttClient(wifiClient);
 
 const char broker[] = "test.mosquitto.org";
 int port = 1883;
-const char topic[] = "iot_system/fridge";
+String topic = "iot_system/A4CF12148738";
+String mac;
 
 double timer;
 double timerInterval = 500;
 bool buttonState;
+bool relayState;
 
 SensorData sensorData;
 
@@ -65,10 +72,14 @@ void setup() {
   pinMode(GREEN_PIN, OUTPUT);
   pinMode(BLUE_PIN, OUTPUT);
   pinMode(BTN_PIN, INPUT_PULLUP);
+  pinMode(RLY_PIN, OUTPUT);
 
   sensors.begin();
-
+  voltageSensor.setSensitivity(voltmeter_sensitivity);
   ACS.autoMidPoint();
+
+  digitalWrite(RLY_PIN, HIGH);
+  relayState = 1;
 
   updateState(CONNECTING);
 }
@@ -92,12 +103,30 @@ void loop() {
 
       break;
     case NORMAL:
-      mqttClient.poll();
-      if (timerFired) {
-        getSensorData();
-        sendSensorData();
+      {
+        mqttClient.poll();
+        int messageSize = mqttClient.parseMessage();
+        if (messageSize) {
+          char letter1 = (char)mqttClient.read();
+          char letter2 = (char)mqttClient.read();
+
+          if (letter1 == 'O' && letter2 == 'n') {
+            digitalWrite(RLY_PIN, HIGH);
+            relayState = 1;
+
+          } else if (letter1 == 'O' && letter2 == 'f') {
+            digitalWrite(RLY_PIN, LOW);
+            relayState = 0;
+          }
+        }
+
+        
+        if (timerFired) {
+          getSensorData();
+          sendSensorData();
+        }
+        break;
       }
-      break;
     case SETUP:
       if (WiFi.getMode() & WIFI_AP) {
         APMode();
@@ -112,9 +141,22 @@ void updateState(State newState) {
       updateLed(BLUE);
       connectToWiFi();
       break;
+
     case NORMAL:
       updateLed(GREEN);
+
+      mac = WiFi.macAddress();
+      //macAddress.replace(":", "");
+
+      topic = "iot_system/";
+      topic += mac;
+
+      Serial.println("TOPIC: ");
+      Serial.print(topic);
+
+      mqttClient.subscribe(topic);
       break;
+
     case SETUP:
       updateLed(RED);
       startAccessPoint();
@@ -139,9 +181,15 @@ void connectToWiFi() {
 
   WiFi.begin(ssid.c_str(), password.c_str());
 
+  int count = 0;
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
+    count++;
+    if (count > 30) {
+      updateState(SETUP);
+      return;
+    }
   }
 
   Serial.println("");
@@ -191,8 +239,6 @@ void APMode() {
             Serial.println("New SSID: " + newSSID);
             Serial.println("New Password: " + newPassword);
 
-
-
             writeStringToEEPROM(0, newSSID);
             writeStringToEEPROM(200, newPassword);
 
@@ -201,12 +247,17 @@ void APMode() {
             // Switch to client mode
             updateState(CONNECTING);  //connectToWiFi();
 
+
           } else {
+            mac = WiFi.macAddress();
             // Send form HTML
             client.println("HTTP/1.1 200 OK");
             client.println("Content-type:text/html");
+            client.println("X-MAC-Address: " + mac);
+            client.println();
             client.println();
             client.println("<!DOCTYPE HTML><html><body>");
+
             client.println("<form action=\"/submit\" method=\"POST\">");
             client.println("SSID: <input type=\"text\" name=\"ssid\"><br>");
             client.println("Password: <input type=\"password\" name=\"password\"><br>");
@@ -257,17 +308,19 @@ void getSensorData() {
   sensorData.temperature = sensors.getTempCByIndex(0);
 
   float average = 0;
-  for (int i = 0; i < 100; i++)
-  {
+  for (int i = 0; i < 100; i++) {
     average += ACS.mA_AC();
   }
   float mA = average / 100.0;
   sensorData.current = average / 100.0;
 
-  sensorData.voltage = 220;
+  sensorData.voltage = voltageSensor.getRmsVoltage();
 }
 
 void sendSensorData() {
+  Serial.print("SENDING DATA TO TOPIC: ");
+  Serial.println(topic);
+
   mqttClient.beginMessage(topic);
   mqttClient.print("{\"t\":");
   mqttClient.print(sensorData.temperature);
@@ -275,6 +328,8 @@ void sendSensorData() {
   mqttClient.print(sensorData.current);
   mqttClient.print(",\"v\":");
   mqttClient.print(sensorData.voltage);
+  mqttClient.print(",\"s\":");
+  mqttClient.print(relayState);
   mqttClient.print("}");
   mqttClient.endMessage();
 }
