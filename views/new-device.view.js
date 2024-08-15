@@ -8,8 +8,8 @@ import LoadingButton from "../components/loading-button.component";
 export default function NewDeviceView({ navigation }) {
   const [state, setState] = useState({ description: "", macAddress: "" });
   const [wifiInfo, setWifiInfo] = useState({
-    ssid: "Assaker Wifi",
-    password: "199265F537C1127",
+    ssid: "",
+    password: "",
   });
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState({ submit: false });

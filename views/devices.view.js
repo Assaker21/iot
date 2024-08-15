@@ -1,46 +1,20 @@
 import {
-  Layout,
   Text,
   ListItem,
   List,
   Button,
   Icon,
   Divider,
-  Card,
-  Select,
-  SelectItem,
-  IndexPath,
   Toggle,
   Spinner,
 } from "@ui-kitten/components";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
-import Status from "../components/status.component";
 import api from "../api/api";
 import LoadingLayout from "../components/loading-layout.component";
-import LoadingButton from "../components/loading-button.component";
 
 export default function DevicesView({ navigation }) {
-  const [state, setState] = useState([
-    {
-      id: "kmas-dasf-dass-wras",
-      description: "Refrigerator",
-      status: "Online",
-      usage: 21,
-    },
-    {
-      id: "kmas-dasf-dass-wras",
-      description: "Washing machine",
-      status: "Offline",
-      usage: 21.56295985,
-    },
-    {
-      id: "kmas-dasf-dass-wras",
-      description: "Water heater",
-      status: "Disabled",
-      usage: 0.065998,
-    },
-  ]);
+  const [state, setState] = useState([]);
 
   const [loading, setLoading] = useState({ findMany: true, update: false });
 
@@ -99,18 +73,6 @@ export default function DevicesView({ navigation }) {
       title={
         <View>
           <Text category="h6">{item.description}</Text>
-        </View>
-      }
-      description={
-        <View>
-          <Text>
-            <Text category="s1">
-              {item.usage.toFixed(2).replace(".00", "")} kWh&nbsp;
-            </Text>
-            <Text category="s2" appearance="hint">
-              used today
-            </Text>
-          </Text>
         </View>
       }
       accessoryRight={() => {

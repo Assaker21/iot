@@ -8,12 +8,10 @@ import DevicesView from "../views/devices.view";
 import PredictionsView from "../views/predictions.view";
 import SettingsView from "../views/settings.view";
 import NewDeviceView from "../views/new-device.view";
-import DeviceView from "../views/device.view";
 import LoginView from "../views/login.view";
 import RegisterView from "../views/register.view";
 import { useAuthContext } from "../contexts/auth.context";
 import { Layout, Text } from "@ui-kitten/components";
-import { useEffect } from "react";
 
 const { Navigator, Screen } = createBottomTabNavigator();
 
@@ -23,7 +21,6 @@ function DevicesStackScreen() {
     <DevicesStack.Navigator>
       <DevicesStack.Screen name="Devices" component={DevicesView} />
       <DevicesStack.Screen name="New device" component={NewDeviceView} />
-      <DevicesStack.Screen name="Device" component={DeviceView} />
     </DevicesStack.Navigator>
   );
 }

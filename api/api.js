@@ -1,8 +1,5 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
-import { NativeEventEmitter, NativeModules } from "react-native";
-
-const eventEmitter = new NativeEventEmitter(NativeModules.MyModule);
 
 const api = axios.create({
   baseURL: "http://192.168.1.103:3000",
