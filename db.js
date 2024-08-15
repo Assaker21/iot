@@ -9,6 +9,7 @@ async function init() {
       user: "root",
       password: "admin",
       database: "iot",
+      port: 3306,
     });
 
     const response = await connection.connect();
