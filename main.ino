@@ -57,7 +57,7 @@ String topic = "iot_system/A4CF12148738";
 String mac;
 
 double timer;
-double timerInterval = 500;
+double timerInterval = 5000;
 bool buttonState;
 bool relayState;
 
@@ -79,7 +79,7 @@ void setup() {
   ACS.autoMidPoint();
 
   digitalWrite(RLY_PIN, HIGH);
-  relayState = 1;
+  relayState = readStringFromEEPROM(300) == "Online" ? 1 : 0;
 
   updateState(CONNECTING);
 }
@@ -112,10 +112,12 @@ void loop() {
 
           if (letter1 == 'O' && letter2 == 'n') {
             digitalWrite(RLY_PIN, HIGH);
+            writeStringToEEPROM(300, "Online");
             relayState = 1;
 
           } else if (letter1 == 'O' && letter2 == 'f') {
             digitalWrite(RLY_PIN, LOW);
+            writeStringToEEPROM(300, "Offline");
             relayState = 0;
           }
         }
