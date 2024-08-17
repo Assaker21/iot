@@ -2,6 +2,7 @@ const db = require("../db");
 const jwt = require("jsonwebtoken");
 
 async function authenticate(req, res) {
+  console.log("REQUEST: AUTHENTICATION");
   const id = req.user.id;
   const [users] = await db.query("SELECT * FROM user WHERE id = ?", [id]);
   req.user = users[0];
