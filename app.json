@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "IoT",
-    "slug": "IoT",
+    "name": "HEMCS",
+    "slug": "HEMCS",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -19,14 +19,12 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.noor.IoT"
+      "package": "com.noor.HEMCS"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-secure-store"
-    ],
+    "plugins": ["expo-secure-store"],
     "extra": {
       "eas": {
         "projectId": "3d6b2248-700b-4dc5-b92d-242942dd8f7e"
